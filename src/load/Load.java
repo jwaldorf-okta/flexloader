@@ -8,9 +8,11 @@ package load;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
@@ -374,7 +376,10 @@ public class Load {
                         if (obj.has("errorCode")) {
                             if (adUser) {
                                 System.out.println(new Date() + " AD User does not exist.");
-                                System.exit(1);
+                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                pw.println(line);
+                                pw.close();
+                                continue;
                             }
                             if (obj.getString("errorCode").equals("E0000007")) {
                                 String ret = post(urlPrefix + "/users", token,
@@ -388,10 +393,20 @@ public class Load {
                                         + "\"userType\":\"External\""
                                         + "}}");
                                 JSONObject o = new JSONObject(ret);
+                                if (o.has("errorCode")) {
+                                    System.out.println(new Date() + " Unexpected Error.");
+                                    PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                    pw.println(line);
+                                    pw.close();
+                                    continue;
+                                }
                                 id = o.getString("id");
                             } else {
                                 System.out.println(new Date() + " Unexpected Error.");
-                                System.exit(1);
+                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                pw.println(line);
+                                pw.close();
+                                continue;
                             }
                         } else {
                             id = obj.getString("id");
@@ -421,7 +436,10 @@ public class Load {
                                         + "\"credentials\":{\"userName\":\"" + values[0] + "\"}}}");
                             } else {
                                 System.out.println(new Date() + " Unexpected Error.");
-                                System.exit(1);
+                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                pw.println(line);
+                                pw.close();
+                                continue;
                             }
                         }
                     } else if (action.equalsIgnoreCase("update")) {
@@ -430,6 +448,13 @@ public class Load {
                         String id = obj.getString("id");
                         val = post(urlPrefix + "/users/" + id, token, "{\"profile\":{\"email\":\""
                                 + newemail + "\", \"login\":\"" + newemail + "\"}}");
+                        if ((new JSONObject(val)).has("errorCode")) {
+                            System.out.println(new Date() + " Unexpected Error.");
+                            PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                            pw.println(line);
+                            pw.close();
+                            continue;
+                        }
                     } else if (action.equalsIgnoreCase("remove")) {
                         String val = get(urlPrefix + "/users/" + email, token);
                         JSONObject obj = new JSONObject(val);
