@@ -330,71 +330,81 @@ public class Load {
                 BufferedReader br = new BufferedReader(new FileReader(inputFileString + ".csv"));
                 String line = br.readLine();
                 while (line != null) {
-                    int v = 0;
-                    String[] values = new String[7];
-                    values[0] = "";
-                    values[1] = "";
-                    values[2] = "";
-                    values[3] = "";
-                    values[4] = "";
-                    values[5] = "";
-                    values[6] = "";
-                    for (int i = 0; i < line.length(); i++) {
-                        char c = line.charAt(i);
-                        if (c == ',') {
-                            v++;
-                        } else if (c == '/') {
-                            i++;
-                            values[v] += line.charAt(i);
-                        } else {
-                            values[v] += c;
-                        }
-                    }
-                    System.out.println(new Date() + " Processing: "
-                            + values[0] + ","
-                            + values[1] + ","
-                            + values[2] + ","
-                            + values[3] + ","
-                            + values[4] + ","
-                            + values[5] + ","
-                            + values[6]);
-                    String email = values[1];
-                    boolean adUser = false;
-                    if (email.contains("flextronics")) {
-                        adUser = true;
-                        String name = email.substring(0, email.indexOf("@"));
-                        email = name + domain;
-                    }
-                    System.out.println(new Date() + " email = " + email);
-                    String appName = values[4];
-                    String action = values[5];
-                    String newemail = values[6];
-                    if (action.equalsIgnoreCase("create")) {
-                        String val = get(urlPrefix + "/users/" + email, token);
-                        JSONObject obj = new JSONObject(val);
-                        String id = "";
-                        if (obj.has("errorCode")) {
-                            if (adUser) {
-                                System.out.println(new Date() + " AD User does not exist.");
-                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
-                                pw.println(line);
-                                pw.close();
-                                line = br.readLine();
-                                continue;
+                    try {
+                        int v = 0;
+                        String[] values = new String[7];
+                        values[0] = "";
+                        values[1] = "";
+                        values[2] = "";
+                        values[3] = "";
+                        values[4] = "";
+                        values[5] = "";
+                        values[6] = "";
+                        for (int i = 0; i < line.length(); i++) {
+                            char c = line.charAt(i);
+                            if (c == ',') {
+                                v++;
+                            } else if (c == '/') {
+                                i++;
+                                values[v] += line.charAt(i);
+                            } else {
+                                values[v] += c;
                             }
-                            if (obj.getString("errorCode").equals("E0000007")) {
-                                String ret = post(urlPrefix + "/users", token,
-                                        "{\"profile\":{"
-                                        + "\"login\":\"" + email + "\","
-                                        + "\"firstName\":\"" + values[2] + "\","
-                                        + "\"lastName\":\"" + values[3] + "\","
-                                        + "\"email\":\""
-                                        + ((emailAlternative.length() == 0) ? email : emailAlternative)
-                                        + "\","
-                                        + "\"userType\":\"External\""
-                                        + "}}");
-                                JSONObject o = new JSONObject(ret);
-                                if (o.has("errorCode")) {
+                        }
+                        System.out.println(new Date() + " Processing: "
+                                + values[0] + ","
+                                + values[1] + ","
+                                + values[2] + ","
+                                + values[3] + ","
+                                + values[4] + ","
+                                + values[5] + ","
+                                + values[6]);
+                        String email = values[1];
+                        boolean adUser = false;
+                        if (email.contains("flextronics")) {
+                            adUser = true;
+                            String name = email.substring(0, email.indexOf("@"));
+                            email = name + domain;
+                        }
+                        System.out.println(new Date() + " email = " + email);
+                        String appName = values[4];
+                        String action = values[5];
+                        String newemail = values[6];
+                        if (action.equalsIgnoreCase("create")) {
+                            String val = get(urlPrefix + "/users/" + email, token);
+                            JSONObject obj = new JSONObject(val);
+                            String id = "";
+                            if (obj.has("errorCode")) {
+                                if (adUser) {
+                                    System.out.println(new Date() + " AD User does not exist.");
+                                    PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                    pw.println(line);
+                                    pw.close();
+                                    line = br.readLine();
+                                    continue;
+                                }
+                                if (obj.getString("errorCode").equals("E0000007")) {
+                                    String ret = post(urlPrefix + "/users", token,
+                                            "{\"profile\":{"
+                                            + "\"login\":\"" + email + "\","
+                                            + "\"firstName\":\"" + values[2] + "\","
+                                            + "\"lastName\":\"" + values[3] + "\","
+                                            + "\"email\":\""
+                                            + ((emailAlternative.length() == 0) ? email : emailAlternative)
+                                            + "\","
+                                            + "\"userType\":\"External\""
+                                            + "}}");
+                                    JSONObject o = new JSONObject(ret);
+                                    if (o.has("errorCode")) {
+                                        System.out.println(new Date() + " Unexpected Error.");
+                                        PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                        pw.println(line);
+                                        pw.close();
+                                        line = br.readLine();
+                                        continue;
+                                    }
+                                    id = o.getString("id");
+                                } else {
                                     System.out.println(new Date() + " Unexpected Error.");
                                     PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                                     pw.println(line);
@@ -402,84 +412,86 @@ public class Load {
                                     line = br.readLine();
                                     continue;
                                 }
-                                id = o.getString("id");
                             } else {
-                                System.out.println(new Date() + " Unexpected Error.");
-                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
-                                pw.println(line);
-                                pw.close();
-                                line = br.readLine();
-                                continue;
-                            }
-                        } else {
-                            id = obj.getString("id");
-                            if (obj.getString("status").equals("DEPROVISIONED")
-                                    || obj.getString("status").equals("STAGED")) {
-                                String href = obj.getJSONObject("_links").getJSONObject("activate").getString("href");
-                                post(href, token, "{}");
-                            }
-                        }
-                        String appID = "";
-                        {
-                            appID = getApp(urlPrefix + "/apps", appName, token);
-                            if (appID.length() == 0) {
-                                String tmp = get(urlPrefix + "/apps/" + templateApp, token);
-                                JSONObject tempObj = new JSONObject(tmp);
-                                tempObj.put("label", appName);
-                                tmp = post(urlPrefix + "/apps", token, tempObj.toString());
-                                appID = getApp(urlPrefix + "/apps", appName, token);
-                            }
-                        }
-                        val = get(urlPrefix + "/apps/" + appID + "/users/" + id, token);
-                        obj = new JSONObject(val);
-                        if (obj.has("errorCode")) {
-                            if (obj.getString("errorCode").equals("E0000007")) {
-                                String ret = post(urlPrefix + "/apps/" + appID + "/users", token,
-                                        "{\"id\":\"" + id + "\",\"scope\": \"USER\","
-                                        + "\"credentials\":{\"userName\":\"" + values[0] + "\"}}}");
-                            } else {
-                                System.out.println(new Date() + " Unexpected Error.");
-                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
-                                pw.println(line);
-                                pw.close();
-                                line = br.readLine();
-                                continue;
-                            }
-                        }
-                    } else if (action.equalsIgnoreCase("update")) {
-                        String val = get(urlPrefix + "/users/" + email, token);
-                        JSONObject obj = new JSONObject(val);
-                        String id = obj.getString("id");
-                        val = post(urlPrefix + "/users/" + id, token, "{\"profile\":{\"email\":\""
-                                + newemail + "\", \"login\":\"" + newemail + "\"}}");
-                        if ((new JSONObject(val)).has("errorCode")) {
-                            System.out.println(new Date() + " Unexpected Error.");
-                            PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
-                            pw.println(line);
-                            pw.close();
-                            line = br.readLine();
-                            continue;
-                        }
-                    } else if (action.equalsIgnoreCase("remove")) {
-                        String val = get(urlPrefix + "/users/" + email, token);
-                        JSONObject obj = new JSONObject(val);
-                        String id = "";
-                        id = obj.getString("id");
-                        String appID = getApp(urlPrefix + "/apps", appName, token);
-                        if (appID.length() > 0) {
-                            delete(urlPrefix + "/apps/" + appID + "/users/" + id, token);
-                            if (!adUser) {
-                                String appLinks = get(urlPrefix + "/users/" + id + "/appLinks", token);
-                                JSONArray a = new JSONArray(appLinks);
-                                if (a.length() == 0) {
-                                    String href = obj.getJSONObject("_links").getJSONObject("deactivate").getString("href");
+                                id = obj.getString("id");
+                                if (obj.getString("status").equals("DEPROVISIONED")
+                                        || obj.getString("status").equals("STAGED")) {
+                                    String href = obj.getJSONObject("_links").getJSONObject("activate").getString("href");
                                     post(href, token, "{}");
                                 }
                             }
-                        } else {
-                            System.out.println(new Date() + " " + appName + " does not exist!");
+                            String appID = "";
+                            {
+                                appID = getApp(urlPrefix + "/apps", appName, token);
+                                if (appID.length() == 0) {
+                                    String tmp = get(urlPrefix + "/apps/" + templateApp, token);
+                                    JSONObject tempObj = new JSONObject(tmp);
+                                    tempObj.put("label", appName);
+                                    tmp = post(urlPrefix + "/apps", token, tempObj.toString());
+                                    appID = getApp(urlPrefix + "/apps", appName, token);
+                                }
+                            }
+                            val = get(urlPrefix + "/apps/" + appID + "/users/" + id, token);
+                            obj = new JSONObject(val);
+                            if (obj.has("errorCode")) {
+                                if (obj.getString("errorCode").equals("E0000007")) {
+                                    String ret = post(urlPrefix + "/apps/" + appID + "/users", token,
+                                            "{\"id\":\"" + id + "\",\"scope\": \"USER\","
+                                            + "\"credentials\":{\"userName\":\"" + values[0] + "\"}}}");
+                                } else {
+                                    System.out.println(new Date() + " Unexpected Error.");
+                                    PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                    pw.println(line);
+                                    pw.close();
+                                    line = br.readLine();
+                                    continue;
+                                }
+                            }
+                        } else if (action.equalsIgnoreCase("update")) {
+                            String val = get(urlPrefix + "/users/" + email, token);
+                            JSONObject obj = new JSONObject(val);
+                            String id = obj.getString("id");
+                            val = post(urlPrefix + "/users/" + id, token, "{\"profile\":{\"email\":\""
+                                    + newemail + "\", \"login\":\"" + newemail + "\"}}");
+                            if ((new JSONObject(val)).has("errorCode")) {
+                                System.out.println(new Date() + " Unexpected Error.");
+                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                pw.println(line);
+                                pw.close();
+                                line = br.readLine();
+                                continue;
+                            }
+                        } else if (action.equalsIgnoreCase("remove")) {
+                            String val = get(urlPrefix + "/users/" + email, token);
+                            JSONObject obj = new JSONObject(val);
+                            String id = "";
+                            id = obj.getString("id");
+                            String appID = getApp(urlPrefix + "/apps", appName, token);
+                            if (appID.length() > 0) {
+                                delete(urlPrefix + "/apps/" + appID + "/users/" + id, token);
+                                if (!adUser) {
+                                    String appLinks = get(urlPrefix + "/users/" + id + "/appLinks", token);
+                                    JSONArray a = new JSONArray(appLinks);
+                                    if (a.length() == 0) {
+                                        String href = obj.getJSONObject("_links").getJSONObject("deactivate").getString("href");
+                                        post(href, token, "{}");
+                                    }
+                                }
+                            } else {
+                                System.out.println(new Date() + " " + appName + " does not exist!");
+                            }
                         }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                        pw.println(line);
+                        pw.close();
+                        line = br.readLine();
+                        continue;
                     }
+                    PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-success.csv"), true));
+                    pw.println(line);
+                    pw.close();
                     line = br.readLine();
                 }
                 br.close();
