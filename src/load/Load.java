@@ -379,6 +379,7 @@ public class Load {
                                 PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                                 pw.println(line);
                                 pw.close();
+                                line = br.readLine();
                                 continue;
                             }
                             if (obj.getString("errorCode").equals("E0000007")) {
@@ -398,6 +399,7 @@ public class Load {
                                     PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                                     pw.println(line);
                                     pw.close();
+                                    line = br.readLine();
                                     continue;
                                 }
                                 id = o.getString("id");
@@ -406,6 +408,7 @@ public class Load {
                                 PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                                 pw.println(line);
                                 pw.close();
+                                line = br.readLine();
                                 continue;
                             }
                         } else {
@@ -439,6 +442,7 @@ public class Load {
                                 PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                                 pw.println(line);
                                 pw.close();
+                                line = br.readLine();
                                 continue;
                             }
                         }
@@ -453,6 +457,7 @@ public class Load {
                             PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
                             pw.println(line);
                             pw.close();
+                            line = br.readLine();
                             continue;
                         }
                     } else if (action.equalsIgnoreCase("remove")) {
