@@ -263,7 +263,7 @@ public class Load {
                 if (retVal == 200) {
                     JSONArray sArray = new JSONArray(new JSONTokener(conn.getInputStream()));
                     for (int i = 0; i < sArray.length(); i++) {
-                        if (sArray.getJSONObject(i).getString("label").equals(label)) {
+                        if (sArray.getJSONObject(i).getString("label").equalsIgnoreCase(label)) {
                             return sArray.getJSONObject(i).getString("id");
                         }
                     }
@@ -429,6 +429,14 @@ public class Load {
                                     tempObj.put("label", appName);
                                     tmp = post(urlPrefix + "/apps", token, tempObj.toString());
                                     appID = getApp(urlPrefix + "/apps", appName, token);
+                                    if (appID.length() == 0) {
+                                        System.out.println(new Date() + " Cannot Create App.");
+                                        PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                        pw.println(line);
+                                        pw.close();
+                                        line = br.readLine();
+                                        continue;
+                                    }
                                 }
                             }
                             val = get(urlPrefix + "/apps/" + appID + "/users/" + id, token);
@@ -446,6 +454,13 @@ public class Load {
                                     line = br.readLine();
                                     continue;
                                 }
+                            } else if (!obj.getJSONObject("credentials").getString("userName").equals(values[0])) {
+                                System.out.println(new Date() + " User already assigned to app with different username.");
+                                PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                                pw.println(line);
+                                pw.close();
+                                line = br.readLine();
+                                continue;
                             }
                         } else if (action.equalsIgnoreCase("update")) {
                             String val = get(urlPrefix + "/users/" + email, token);
