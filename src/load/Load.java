@@ -361,7 +361,8 @@ public class Load {
                                 + values[6]);
                         String email = values[1];
                         boolean adUser = false;
-                        if (email.contains("flextronics")) {
+                        String emailSubdomain = email.substring(email.indexOf("@") + 1).toLowerCase();
+                        if (emailSubdomain.contains("flextronics.com")) {
                             adUser = true;
                             String name = email.substring(0, email.indexOf("@"));
                             email = name + domain;
