@@ -8,6 +8,7 @@ package load;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -314,17 +315,42 @@ public class Load {
      */
     public static void main(String[] args) {
         System.out.println(new Date() + " Starting: " + args[0] + "," + args[1] + "," + args[2]
-                + "," + args[3] + "," + args[4]);
+                + "," + args[3] + "," + args[4] + "," + args[5]);
         String urlPrefix = args[0];
         String token = args[1];
         String templateApp = args[2];
         String inputFileString = args[3];
         String domain = args[4];
-        String emailAlternative = "";
-        if (args.length > 5) {
-            emailAlternative = args[5];
-            System.out.println(new Date() + " Do email alternative to " + emailAlternative);
+        String appNamesFile = args[5];
+        int sleepTimeInMinutesInt = Integer.parseInt(args[6]);
+        LinkedList<String> appNames = new LinkedList();
+
+        BufferedReader brr = null;
+        String bline = "";
+        try {
+            brr = new BufferedReader(new FileReader(appNamesFile));
+            while ((bline = brr.readLine()) != null) {
+                appNames.add(bline);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (brr != null) {
+                try {
+                    brr.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
+
+        String emailAlternative = "";
+//        if (args.length > 7) {
+//            emailAlternative = args[7];
+//            System.out.println(new Date() + " Do email alternative to " + emailAlternative);
+//        }
         while (true) {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(inputFileString + ".csv"));
@@ -369,6 +395,14 @@ public class Load {
                         }
                         System.out.println(new Date() + " email = " + email);
                         String appName = values[4];
+                        if (!appNames.contains(appName)) {
+                            System.out.println(new Date() + " " + appName + " is not in the list of valid apps.");
+                            PrintWriter pw = new PrintWriter(new FileOutputStream(new File(inputFileString + "-failed.csv"), true));
+                            pw.println(line);
+                            pw.close();
+                            line = br.readLine();
+                            continue;
+                        }
                         String action = values[5];
                         String newemail = values[6];
                         if (action.equalsIgnoreCase("create")) {
@@ -522,7 +556,7 @@ public class Load {
                 e.printStackTrace();
             }
             try {
-                Thread.sleep(5 * 60 * 1000);
+                Thread.sleep(sleepTimeInMinutesInt * 60 * 1000);
             } catch (Exception ee) {
                 ee.printStackTrace();
             }
